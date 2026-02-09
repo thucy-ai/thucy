@@ -238,14 +238,7 @@ The `--workflow` flag is just a name to help identify your results file.
 In order to vizualise the results of the paper (or reproduce them from
 scratch), please run the notebook `experiments/paper/tabfact.ipynb`.
 
-# Extend & Develop
+# Acknowledgement
 
 This project has been created using [nbdev](https://nbdev.fast.ai/) (big
 shoutout!).
-
-If you want to develop independently first run:
-
-``` sh
-nbdev_install_quarto
-nbdev_install_hooks
-```
