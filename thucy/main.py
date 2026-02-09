@@ -12,6 +12,7 @@ from .toolbox import *
 from agents import trace
 from .agents import *
 import asyncio
+import uuid
 
 # %% ../nbs/04_main.ipynb 4
 def handle_config_command(args):
@@ -61,9 +62,8 @@ def main():
 
     verify_parser = subparsers.add_parser('verify', help='Run claim verification')
     verify_parser.add_argument('query', help='Natural language query to verify')
-    verify_parser.add_argument('--workflow', default='Default-Workflow',
+    verify_parser.add_argument('--workflow', default=f'workflow-{uuid.uuid4().hex[:8]}',
                               help="A name that will help you find this file in the results. It is not important for it to be unique, but it would be helpful! We usually set it to something that describes the veriication 'workflow' (e.g., 'Seattle-Violent-Crime').")
-    verify_parser.add_argument('--toolset', help="Toolset name (e.g., seattle). For example, if given `seattle`, then, in the `tools.yaml` we must provide the toolsets `seattle-sql` and `seattle-schema`.", required=True)
 
     # ---------------------------------------------
     # thucy config ...

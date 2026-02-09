@@ -46,7 +46,7 @@ async def discover_data_sources() -> DataReport:  # Returns a `DataReport`
     """Performs a one-time high-level discovery of all connected data sources 
     and returns a concise summary of available databases and their content domains."""
     
-    tools = genai_mcp.load_toolset("schema")
+    tools = genai_mcp.load_toolset(config.data_expert_toolset)
     
     explorer_agent = Agent(
         name="Data Expert",
@@ -121,7 +121,7 @@ async def schema_query(query: SchemaQuery  # The `SchemaQuery` instance containi
     multiple potential relational database sources. It can describe tables, columns, 
     relationships, keys, and other structural details for the relevant database."""
 
-    tools = genai_mcp.load_toolset("schema")
+    tools = genai_mcp.load_toolset(config.schema_expert_toolset)
 
     agent = Agent(
         name="Schema Expert",
@@ -201,7 +201,7 @@ async def nl_query(
     statements that produced them. Each part of the answer is accompanied by the 
     exact executed SQL query that served as its evidence."""
     
-    tools = genai_mcp.load_toolset("sql")
+    tools = genai_mcp.load_toolset(config.sql_expert_toolset)
     
     agent = Agent(
         name="SQL Expert",
@@ -221,7 +221,7 @@ nl_query_tool = function_tool(nl_query)
 # %% ../nbs/03_agents.ipynb 66
 VERIFIER_PROMPT = """
 # Role and Objective
-You are a data expert and a verifier. Your goal is to verify every claim provided to you by grounding your reasoning in real, verifiable data sources. You have access to various tools that enable you to retrieve and analyze factual data—use them whenever they enhance your analysis. You must produce a clear and structured report that summarizes your findings and **includes the exact SQL queries** that generated the supporting evidence. Your query tools are specifically designed to return these executed SQL statements for inclusion in your report.
+You are a data expert and a verifier. Your goal is to verify the veracity of each claim by grounding every conclusion in real, verifiable data sources. You have access to various tools that enable you to retrieve and analyze factual data. Use them whenever they enhance your analysis. You must produce a clear and structured report that summarizes your findings and **includes the exact SQL queries** that generated the supporting evidence. Your query tools are specifically designed to return these executed SQL statements for inclusion in your report.
 
 # Data Grounding Principles
 - Always begin by exploring the available data sources to understand their structure and contents before interpreting the claim. This ensures your reasoning is firmly grounded in the real data environment.
@@ -237,6 +237,10 @@ You are a data expert and a verifier. Your goal is to verify every claim provide
 - Use tools to obtain the information you need, delegating clear and well-scoped tasks to them when appropriate.
 - For multi-step questions, plan the reasoning explicitly and execute each step through a separate tool call. Each call should address one specific information need.
 - Remember: Tools are stateless. Recreate any necessary context between tool calls explicitly.
+
+# Output Format
+- The verdict has specific veracity labels that you must choose from.
+- Your final text report should be in **Markdown** so that it is readable.
 """
 
 # %% ../nbs/03_agents.ipynb 68
@@ -249,14 +253,16 @@ class VerificationAnswer(BaseModel):
         ...,
         description="The full report describing which parts of the claims are true and which are not."
     )
-    verdict: Literal["Verified", "Partly Verified", "Partly Inaccurate", "Inaccurate"] = Field(
+    verdict: Literal["VERIFIED", "PARTLY_VERIFIED", "PARTLY_INACCURATE", "INACCURATE", "NOT ENOUGH INFO"] = Field(
         ...,
         description=(
             "Your final verdict should be one of the following:\n"
-            "- **Verified**: The overall claim is fully supported by the evidence, allowing for minor acceptable deviations (e.g., rounding, naming, or formatting differences).\n"
-            "- **Partly Verified**: The overall claim is supported by the evidence, but some supporting details are incomplete, imprecise, or contain minor factual inaccuracies.\n"
-            "- **Partly Inaccurate**: The overall claim contains a mixture of true and false elements, with errors substantial enough to undermine confidence in the conclusion.\n"
-            "- **Inaccurate**: The overall claim is contradicted or unsupported by the evidence.\n"
+            "- **VERIFIED**: The overall claim is fully supported by the evidence, allowing for minor acceptable deviations (e.g., rounding, naming, or formatting differences).\n"
+            "- **PARTLY_VERIFIED**: The overall claim is supported by the evidence, but some supporting details are incomplete, imprecise, or contain minor factual inaccuracies.\n"
+            "- **PARTLY_INACCURATE**: The overall claim contains a mixture of true and false elements, with errors substantial enough to undermine confidence in the conclusion.\n"
+            "- **INACCURATE**: The overall claim is contradicted or unsupported by the evidence.\n"
+            "- **NOT ENOUGH INFO**: There is insufficient evidence to assign any of the other verdicts confidently."
+
         )
     )
 

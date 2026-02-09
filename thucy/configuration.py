@@ -23,6 +23,9 @@ class Config:
         "SCHEMA_EXPERT_MAX_TURNS": "30",
         "DATA_EXPERT_MAX_TURNS": "30",
         "GENAI_SERVER_URL": "http://127.0.0.1:5000",
+        "SQL_EXPERT_TOOLSET": "seattle-sql",
+        "SCHEMA_EXPERT_TOOLSET": "seattle-schema",
+        "DATA_EXPERT_TOOLSET": "seattle-schema",
     }
     
     def __init__(self):

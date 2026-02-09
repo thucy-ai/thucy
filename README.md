@@ -56,7 +56,7 @@ We can simply load the data into a database and ask Thucy to verify the
 claim:
 
 ``` sh
-thucy verify "The number of violent crimes decreased in Seattle between 2024 and 2023" --workflow "Violent-Crimes" --toolset seattle
+thucy verify "The number of violent crimes decreased in Seattle between 2024 and 2023" --workflow "Violent-Crimes"
 ```
 
     Setting up connection to Google's toolbox...
@@ -93,34 +93,30 @@ pip install -e .
 
 ## Configurations
 
-We know that setting up and configuring stuff is a pain. However, there
-are a lot of moving parts in this project. We have made the
-configuration **as easy as possible** from the user-side — we take care
-of most of the heavy lifting for you.
-
-The only thing we need to configure manually are the specific database
-connection details (usernames, passwords, etc.) so that we can deploy
-Google’s MCP Toolbox, and also the OpenAI API keys for using the OpenAI
-Agents SDK. We will walk you through the steps to do that. **It will be
-quick and easy, we promise!**
+You’ll need to configure: ① OpenAI API key, ② toolsets for the agents,
+and ③ database connections in `tools.yaml`.
 
 ### OpenAI API Key
 
-To use Thucy, you need to have an OpenAI API key. If you don’t have one,
-you can sign up at [OpenAI’s
-website](https://platform.openai.com/api-keys) and create an API key.
-
-In order to set an environment variable in Thucy we simply run the
-following:
+You need an OpenAI API key. Get one at [OpenAI’s
+website](https://platform.openai.com/api-keys).
 
 ``` sh
-thucy config set OPENAI_API_KEY sk_xxyy
+thucy config set OPENAI_API_KEY <your-api-key>
 ```
 
-where `sk_xxyy` is your actual OpenAI API key.
+### Toolsets
 
-Then, you can verify that it has been set correctly by inspecting the
-configuration:
+Configure which toolsets each agent uses (these must match names in your
+`tools.yaml`):
+
+``` sh
+thucy config set SQL_EXPERT_TOOLSET seattle-sql
+thucy config set SCHEMA_EXPERT_TOOLSET seattle-schema
+thucy config set DATA_EXPERT_TOOLSET seattle-schema
+```
+
+### Verify Configuration
 
 ``` sh
 thucy config show
@@ -130,108 +126,69 @@ thucy config show
     OPENAI_API_KEY=sk-xxyy
     EXPERTS_MODEL=gpt-5-mini
     LEAD_MODEL=gpt-5
+    LEAD_MAX_TURNS=40
     SQL_EXPERT_MAX_TURNS=30
     SCHEMA_EXPERT_MAX_TURNS=30
     DATA_EXPERT_MAX_TURNS=30
     GENAI_SERVER_URL=http://127.0.0.1:5000
-    LEAD_MAX_TURNS=40
+    SQL_EXPERT_TOOLSET=seattle-sql
+    SCHEMA_EXPERT_TOOLSET=seattle-schema
+    DATA_EXPERT_TOOLSET=seattle-schema
 
 ### Google’s MCP Toolbox
 
 #### Databases
 
-Google makes our life easy because they built a great tool for managing
-database connections and agentic **tools**. If you want to learn more
-you can read the
-[blog](https://cloud.google.com/blog/products/ai-machine-learning/mcp-toolbox-for-databases-now-supports-model-context-protocol).
-
-Here, all we care about is setting up the database connections properly
-and defining a few tools! We will only work with the `tools.yaml` file.
-Let’s take a peak on how the first lines look like:
+We use [Google’s MCP
+Toolbox](https://cloud.google.com/blog/products/ai-machine-learning/mcp-toolbox-for-databases-now-supports-model-context-protocol)
+to manage database connections. Edit `tools.yaml` to configure your
+databases:
 
 ``` yaml
 sources:
-  postgres-seattle:  # A custom name of our choice!
-    database: seattle   # The actual database name 
+  postgres-seattle:
+    database: seattle
     host: localhost
-    kind: postgres  # The type of database
+    kind: postgres
     password: guest_pass
     port: 5432
     user: guest_user
 ```
 
-Under the `sources` section, we define all our database connections. In
-this example, we have a PostgreSQL database named `seattle` running on
-our local machine. We also have a postgres-defined user `guest_user`
-with password `guest_pass`. This is just an example, **you should
-replace these values with your actual database connection details.**
-
-Tips: ① Input a user that has all permissions; ② Always have a
-`password` (do not leave this empty or delete it).
-
-We follow the documentation found
-[here](https://googleapis.github.io/genai-toolbox/resources/sources/postgres/).
-Of course, we can add more database connections (e.g., MySQL, SQLite,
-etc.) by following the same pattern as above. We simply append more
-entries under the `sources` section. Follow the link above for other
-database connections and their required parameters (e.g.,
-[MySQL](https://googleapis.github.io/genai-toolbox/resources/sources/mysql/),
-[SQLite](https://googleapis.github.io/genai-toolbox/resources/sources/sqlite/),
-etc.).
+Replace with your actual database credentials. See the
+[docs](https://googleapis.github.io/genai-toolbox/resources/sources/postgres/)
+for other database types (MySQL, SQLite, etc.).
 
 #### Tools
 
-Now, we are ready to go to the fun stuff. Let’s take a peak again to the
-next lines of `tools.yaml`:
+Define tools that bind to your database sources:
 
 ``` yaml
 tools:
-  postgres_seattle_execute_sql:  # Custom name!
-    description: Executes SQL queries on the PostgreSQL Seattle database. The queries must be PostgreSQL-compatible.
+  postgres_seattle_execute_sql:
+    description: Executes SQL queries on the PostgreSQL Seattle database.
     kind: postgres-execute-sql
     source: postgres-seattle
   postgres_seattle_list_tables:
-    description: Retrieves PostgreSQL schema information in the Seattle database. Supports both **simple** (table names only) and **detailed** output.
-    kind: postgres-list-tables  # This is Google's primitive (like above)!
+    description: Retrieves schema information from the Seattle database.
+    kind: postgres-list-tables
     source: postgres-seattle
 ```
 
-We defined two tools: ① `postgres_seattle_execute_sql`, ②
-`postgres_seattle_list_tables`. Notice that they are *binded* to the
-Seattle database (i.e., `source: postgres-seattle` - this is the exact
-name we gave our database connection above!). Then, we also *bind* the
-tool to a Google’s primitive function (like `postgres-execute-sql` and
-`postgres-list-tables`, see
-[here](https://googleapis.github.io/genai-toolbox/resources/sources/postgres/)
-for their definition).
+#### Defining Toolsets
 
-As long as you did not change the name of the database connection (i.e.,
-`postgres-seattle`) you can keep this configuration as is! 😇
-
-Of course, you can create a lot more tools for different databases by
-following the same pattern.
-
-#### Toolsets
-
-Here, we will bring it all together. Let’s take a peak at the final
-lines of `tools.yaml`:
+Finally, group your tools into **toolsets**:
 
 ``` yaml
 toolsets:
-  seattle-schema:  # Custom name! BUT, our system expects `-schema` suffix for schema toolsets!
+  seattle-schema:
   - postgres_seattle_list_tables
-  seattle-sql:  # Custom name! BUT, our system expects `-sql` suffix for SQL toolsets!
+  seattle-sql:
   - postgres_seattle_execute_sql
 ```
 
-We can define **toolsets** that group related tools together. In this
-example, we have two toolsets: `seattle-schema` and `seattle-sql`. Of
-course, in this example we only have one tool in each toolset.
-
-This is **not** how it usually is. We encourage you to take a look at
-`tools.yaml.template` for more complex examples with multiple databases
-and tools. This is where you will appreciate the flexibility of Google’s
-toolbox!
+These toolset names (`seattle-schema`, `seattle-sql`) are what you’ll
+configure via `thucy config set` to tell each agent which tools to use.
 
 #### Running the MCP Toolbox
 
@@ -248,53 +205,33 @@ toolbox --ui
     2025-12-02T19:36:39.079846-08:00 INFO "Server ready to serve!" 
     2025-12-02T19:36:39.079852-08:00 INFO "Toolbox UI is up and running at: http://127.0.0.1:5000/ui
 
-Congratulations! We have completed the configurations. 🎉
+If you encounter errors, check for YAML indentation mistakes. See the
+[docs](https://googleapis.github.io/genai-toolbox/resources/sources/)
+for help.
 
-If you encounter errors, double-check for indentation mistakes (talking
-from personal experience here). Usually, the errors are self-explanatory
-and easily-fixable. Otherwise, you can take a look at the
-[docs](https://googleapis.github.io/genai-toolbox/resources/sources/).
+## Add Data
 
-## Add some Interesting Data!
+Load data into your database(s). Examples: [Seattle Crime
+Data](https://data.seattle.gov/Public-Safety/SPD-Crime-Data-2008-Present/tazs-3rd5/about_data),
+[Los Angeles
+Crime](https://catalog.data.gov/dataset/crime-data-from-2020-to-present).
+Don’t worry about messy data—Thucy handles that!
 
-Remember to add some data to your database(s). For example, [Seattle
-Crime
-Data](https://data.seattle.gov/Public-Safety/SPD-Crime-Data-2008-Present/tazs-3rd5/about_data)
-or [Los Angeles
-Crime](https://catalog.data.gov/dataset/crime-data-from-2020-to-present)
-etc. Simply `COPY` the CSV files into the database(s) you configured
-above. **Do not bother with the messiness of the data, Thucy’s job is to
-handle that!**
+## Run Thucy
 
-## Usage Workflow
-
-First, make sure that the toolbox is running:
+Start the toolbox server:
 
 ``` sh
 toolbox --ui
 ```
 
-Then, we can run Thucy as follows:
+Then, run Thucy:
 
 ``` sh
-thucy verify <CLAIM-TO-VERIFY> --workflow <CUSTOM-NAME> --toolset <TOOLSET-TO-USE>
+thucy verify "<CLAIM-TO-VERIFY>" --workflow "<CUSTOM-NAME>"
 ```
 
-The `<CUSTOM-NAME>` is an arbitrary name you give to your workflow
-(e.g., `Violent-Crimes` in the example above).
-
-The `<TOOLSET-TO-USE>` is a prefix of the toolset you want to use from
-the `tools.yaml` we configured above. Internally, Thucy always uses two
-toolsets in exacution: ① a schema toolset, and a ② a sql toolset. Users
-are expected to give the common prefix of these toolsets. In our
-configuration example above, this would be `seattle`. What happens in
-the code is that we assign `seattle-sql` to the SQL expert agent, and
-`seattle-schema` to the SQL expert agent!
-
-We also encourage you to take a look at the `tools.yaml.template`
-configuration which showcases the flexibility of the toolbox. In this
-configuration we might choose to do `--toolset west-coast`. This would
-give the agents access to 3 databases.
+The `--workflow` flag is just a name to help identify your results file.
 
 # Paper Results
 

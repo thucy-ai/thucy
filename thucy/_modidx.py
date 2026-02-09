@@ -41,6 +41,4 @@ d = { 'settings': { 'branch': 'main',
                                'thucy.toolbox.GenAIToolboxMCP.close': ('toolbox.html#genaitoolboxmcp.close', 'thucy/toolbox.py'),
                                'thucy.toolbox.GenAIToolboxMCP.connect': ('toolbox.html#genaitoolboxmcp.connect', 'thucy/toolbox.py'),
                                'thucy.toolbox.GenAIToolboxMCP.load_toolset': ( 'toolbox.html#genaitoolboxmcp.load_toolset',
-                                                                               'thucy/toolbox.py'),
-                               'thucy.toolbox.GenAIToolboxMCP.set_specific_toolset': ( 'toolbox.html#genaitoolboxmcp.set_specific_toolset',
-                                                                                       'thucy/toolbox.py')}}}
+                                                                               'thucy/toolbox.py')}}}

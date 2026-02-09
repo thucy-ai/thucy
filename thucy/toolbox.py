@@ -12,35 +12,27 @@ from .configuration import config
 
 # %% ../nbs/02_toolbox.ipynb 4
 class GenAIToolboxMCP:
-    """Factory for managing a shared ToolboxSyncClient and loading toolsets."""
+    """Manager for a shared ToolboxSyncClient connection."""
+    
     def __init__(self):
-        self.toolset = None
-
-    def set_specific_toolset(self, toolset: str):
-        self.toolset = toolset
-
-    def _load_raw_toolset(self, toolset_name: str):
-        """Load a toolset by name and wrap it with openai sdk tool tool func."""
-
-        # If a specific database is set, modify the toolset name accordingly.
-        # This allows for specific database toolsets to be loaded, instead
-        # of the "big" generic ones.
-        if self.toolset:
-            toolset_name = f"{self.toolset}-{toolset_name}"
-
-        toolset = self.client.load_toolset(toolset_name)
-
-        return toolset
-
-    def load_toolset(self, toolset_name: str):
-        """Load a toolset by name and wrap it with openai sdk tool tool func."""
-        return [function_tool(tool) for tool in self._load_raw_toolset(toolset_name)]
+        self.client = None
     
     def connect(self):
         self.client = ToolboxSyncClient(config.genai_server_url)
     
     def close(self):
-        self.client.close()
+        if self.client:
+            self.client.close()
+    
+    def _load_raw_toolset(self, toolset_name: str):
+        """Load raw toolset from client."""
+        if not self.client:
+            raise RuntimeError("Call connect() first")
+        return self.client.load_toolset(toolset_name)
+    
+    def load_toolset(self, toolset_name: str):
+        """Load toolset and wrap tools for OpenAI SDK."""
+        return [function_tool(tool) for tool in self._load_raw_toolset(toolset_name)]
 
 # %% ../nbs/02_toolbox.ipynb 6
 genai_mcp = GenAIToolboxMCP()
