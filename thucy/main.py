@@ -28,7 +28,6 @@ async def handle_verify_command(args):
 
     print("Setting up connection to Google's toolbox...")
     genai_mcp.connect()
-    genai_mcp.set_specific_toolset(args.toolset)
     print("Success!")
 
     user_query = UserQuery(query=args.query)
