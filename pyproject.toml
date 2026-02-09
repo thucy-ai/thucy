@@ -1,3 +1,37 @@
 [build-system]
-requires = ["setuptools>=64.0", "packaging"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "thucy"
+dynamic = ["version"]
+description = "An LLM-based Multi-Agent System for Claim Verification across Relational Databases"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [{name = "Michael Theologitis", email = "michael.theologitis@outlook.com"}]
+keywords = ['nbdev', 'jupyter', 'notebook', 'python']
+classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
+dependencies = ['python-dotenv', 'toolbox-core', 'openai-agents', 'pydantic', 'nbdev']
+
+[project.urls]
+Repository = "https://github.com/michaeltheologitis/thucy"
+Documentation = "https://michaeltheologitis.github.io/thucy"
+
+[project.entry-points.nbdev]
+thucy = "thucy._modidx:d"
+
+[project.optional-dependencies]
+dev = ['jupyterlab', 'jupyterlab-quarto', 'nest_asyncio']
+
+
+[project.scripts]
+thucy = "thucy.main:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "thucy.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["thucy"]
+
+[tool.nbdev]
