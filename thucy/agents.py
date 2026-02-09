@@ -253,14 +253,14 @@ class VerificationAnswer(BaseModel):
         ...,
         description="The full report describing which parts of the claims are true and which are not."
     )
-    verdict: Literal["VERIFIED", "PARTLY_VERIFIED", "PARTLY_INACCURATE", "INACCURATE", "NOT ENOUGH INFO"] = Field(
+    verdict: Literal["VERIFIED", "PARTLY VERIFIED", "PARTLY CONTRADICTED", "CONTRADICTED", "NOT ENOUGH INFO"] = Field(
         ...,
         description=(
             "Your final verdict should be one of the following:\n"
             "- **VERIFIED**: The overall claim is fully supported by the evidence, allowing for minor acceptable deviations (e.g., rounding, naming, or formatting differences).\n"
-            "- **PARTLY_VERIFIED**: The overall claim is supported by the evidence, but some supporting details are incomplete, imprecise, or contain minor factual inaccuracies.\n"
-            "- **PARTLY_INACCURATE**: The overall claim contains a mixture of true and false elements, with errors substantial enough to undermine confidence in the conclusion.\n"
-            "- **INACCURATE**: The overall claim is contradicted or unsupported by the evidence.\n"
+            "- **PARTLY VERIFIED**: The overall claim is supported by the evidence, but some supporting details are incomplete, imprecise, or contain minor factual inaccuracies.\n"
+            "- **PARTLY CONTRADICTED**: The overall claim contains a mixture of true and false elements, with errors substantial enough to undermine confidence in the conclusion.\n"
+            "- **CONTRADICTED**: The overall claim is contradicted or unsupported by the evidence.\n"
             "- **NOT ENOUGH INFO**: There is insufficient evidence to assign any of the other verdicts confidently."
 
         )
